@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Árfolyam és GDP összehasonlítás</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        canvas {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Árfolyam és GDP összehasonlítás</h1>
+        <div class="currency-info" id="currency-info-1">
+            <h2>Ország 1</h2>
+            <select id="country-select-1">
+                <option value="">Válassz egy országot</option>
+                <option value="Orszag1">Ország 1</option>
+                <option value="EUR">Euro (EUR)</option>
+                <option value="BGN">Bulgarian Lev (BGN)</option>
+                <option value="HRK">Croatian Kuna (HRK)</option>
+                <option value="CZK">Czech Koruna (CZK)</option>
+                <option value="DKK">Danish Krone (DKK)</option>
+                <option value="HUF">Hungarian Forint (HUF)</option>
+                <option value="PLN">Polish Zloty (PLN)</option>
+                <option value="RON">Romanian Leu (RON)</option>
+            </select>
+            <div class="exchange-rate" id="exchange-rate-1"></div>
+            <div class="gdp-info" id="gdp-info-1"></div>
+        </div>
+        <div class="currency-info" id="currency-info-2">
+            <h2>Ország 2</h2>
+            <select id="country-select-2">
+                <option value="">Válassz egy országot</option>
+                <option value="EUR">Euro (EUR)</option>
+                <option value="BGN">Bulgarian Lev (BGN)</option>
+                <option value="HRK">Croatian Kuna (HRK)</option>
+                <option value="CZK">Czech Koruna (CZK)</option>
+                <option value="DKK">Danish Krone (DKK)</option>
+                <option value="HUF">Hungarian Forint (HUF)</option>
+                <option value="PLN">Polish Zloty (PLN)</option>
+                <option value="RON">Romanian Leu (RON)</option>
+            </select>
+            <div class="exchange-rate" id="exchange-rate-2"></div>
+            <div class="gdp-info" id="gdp-info-2"></div>
+        </div>
+        <canvas id="exchangeChart" width="400" height="200"></canvas>
+        <canvas id="gdpChart" width="400" height="200"></canvas>
+    </div>
+
+    <script>
+        const countrySelect1 = document.getElementById('country-select-1');
+        const countrySelect2 = document.getElementById('country-select-2');
+        const exchangeRateDisplay1 = document.getElementById('exchange-rate-1');
+        const exchangeRateDisplay2 = document.getElementById('exchange-rate-2');
+        const gdpDisplay1 = document.getElementById('gdp-info-1');
+        const gdpDisplay2 = document.getElementById('gdp-info-2');
+
+        let exchangeRates = {
+            "EUR": 0.2,
+            "BGN": 0.112,
+            "HRK": 0.134,
+            "CZK": 4.918,
+            "DKK": 1.46,
+            "HUF": 1.14,
+            "PLN": 0.21,
+            "RON": 1
+        };
+
+        let gdps = {
+            "EUR": 24000,
+            "BGN": 9600,
+            "HRK": 16600,
+            "CZK": 3200,
+            "DKK": 45000,
+            "HUF": 14300,
+            "PLN": 15700,
+            "RON": 12500
+        };
+
+        let exchangeChart;
+        let gdpChart;
+
+        function updateExchangeRates() {
+            const selectedCountry1 = countrySelect1.value;
+            const selectedCountry2 = countrySelect2.value;
+
+            if (exchangeRates.hasOwnProperty(selectedCountry1)) {
+                exchangeRateDisplay1.textContent = `Árfolyam: 1 EUR = ${exchangeRates[selectedCountry1]} ${selectedCountry1}`;
+            } else {
+                exchangeRateDisplay1.textContent = 'Nincs adat az árfolyamról.';
+            }
+
+            if (exchangeRates.hasOwnProperty(selectedCountry2)) {
+                exchangeRateDisplay2.textContent = `Árfolyam: 1 EUR = ${exchangeRates[selectedCountry2]} ${selectedCountry2}`;
+            } else {
+                exchangeRateDisplay2.textContent = 'Nincs adat az árfolyamról.';
+            }
+
+            updateExchangeChart(selectedCountry1, selectedCountry2);
+            updateGDP(selectedCountry1, selectedCountry2);
+        }
+
+        function updateExchangeChart(country1, country2) {
+            if (exchangeChart) {
+                exchangeChart.destroy();
+            }
+
+            const ctx = document.getElementById('exchangeChart').getContext('2d');
+            exchangeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ország 1', 'Ország 2'],
+                    datasets: [{
+                        label: `${country1} árfolyama`,
+                        data: [exchangeRates[country1] || 0, exchangeRates[country2] || 0],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGDP(country1, country2) {
+            if (gdpChart) {
+                gdpChart.destroy();
+            }
+
+            const ctx = document.getElementById('gdpChart').getContext('2d');
+            gdpChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ország 1', 'Ország 2'],
+                    datasets: [{
+                        label: `${country1} GDP-je`,
+                        data: [gdps[country1] || 0, gdps[country2] || 0],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        countrySelect1.addEventListener('change', updateExchangeRates);
+        countrySelect2.addEventListener('change', updateExchangeRates);
+
+        // Initial update
+        updateExchangeRates();
+    </script>
+</body>
+</html>
